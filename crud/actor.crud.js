@@ -31,6 +31,7 @@ Movie.belongsToMany(Actor, {
     foreignKey: "mid",
 });
 
+
 class ActorCrud {
     retrieveAllActors = async () => { // reads direct left join
         return await Actor.findAll({
