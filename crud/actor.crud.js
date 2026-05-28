@@ -1,14 +1,14 @@
 import Actor from "../entities/actor.js";
 import Movie from "../entities/movie.js";
 import Logging from "../log/logging.js";
-import {configClassAndSequelize} from "../config/config.db.js";
+import {configClassAndSequelize} from "../config/db.config.js";
 
 // don't forget async&await before query by Sequelize
 // we have to get sequelize connect db for Writing Row sql
-const configDb = new configClassAndSequelize.configDb
+const configDb = new configClassAndSequelize.dbConfig
 const sequelizeConnect = configDb.sequelizeConnectDB
 
-/*
+/**
    *****
    Sequelize provides four types of associations (belongsToMany , hasMany , ...)
    A.hasOne(B); // A HasOne B
@@ -19,8 +19,7 @@ const sequelizeConnect = configDb.sequelizeConnectDB
    If you are done to set up association
    So , you have to no need to set up it again (talk about this Actor , Movie)
 */
-// ** Way to work with relation table
-// belongsToMany() provides simple way to define the Sequelize Many-to-Many relationship. ** belong (v. อยู่ใน)
+// ** Way to work with relation table  belongsToMany() provides simple way to define the Sequelize Many-to-Many relationship. ** belong (v. อยู่ใน)
 Actor.belongsToMany(Movie, {
     through: "actors_movies", // ** through (adv. ผ่าน) ** specify name relation table
     as: "movies", // mapped to table
@@ -33,8 +32,8 @@ Movie.belongsToMany(Actor, {
 });
 
 
-class ActorServiceCrud {
-    retrieveAllActors = async () => { /* reads direct left join */
+class ActorCrud {
+    retrieveAllActors = async () => { // reads direct left join
         return await Actor.findAll({
             include: [
                 {
@@ -49,7 +48,7 @@ class ActorServiceCrud {
             ]
         })
     }
-    /*
+    /**
     ** without through: {attributes: [],}
     [
       {
@@ -129,7 +128,6 @@ class ActorServiceCrud {
     ]
     * */
 
-
     retrieveActor = async (aid) => {
         return await Actor.findByPk(aid, {
             include: [
@@ -145,18 +143,11 @@ class ActorServiceCrud {
             ]
         })
     }
-    /*
+    /**
      SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A001';
     */
 
-
     addActor = async (actor) => {
-        /*
-        -- aid VARCHAR(4) ,
-        -- fullname VARCHAR(25),
-        -- born date,
-        -- contact VARCHAR(10)
-        */
         return await Actor.create({
             aid: actor.aid,
             fullname: actor.fullname,
@@ -165,21 +156,18 @@ class ActorServiceCrud {
         })
     }
 
-
     // Way to update association table (actors_movies)
     addRelation = async (aid, mid) => {
         return await this.retrieveActor(aid).then(async (actor) => {
             return await Movie.findByPk(mid).then(async (movie) => {
-                // *** try to understand
-                // ***
                 return await movie.addActor(actor).then((response) => {
                     /*
-                    // Logging.winston.info(JSON.stringify(response)) // [{"mid":"M001","aid":"A004"}]
-                    Executing (default): SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A004';
-                    Executing (default): SELECT `mid`, `title`, `categories`, `rate`, `year` FROM `movies` AS `movies` WHERE `movies`.`mid` = 'M001';
-                    Executing (default): SELECT `mid`, `aid` FROM `actors_movies` AS `actors_movies` WHERE `actors_movies`.`mid` = 'M001' AND `actors_movies`.`aid` IN ('A004');
-                    // then update relation table
-                    Executing (default): INSERT INTO `actors_movies` (`mid`,`aid`) VALUES ('M001','A004');
+                        // Logging.winston.env(JSON.stringify(response)) // [{"mid":"M001","aid":"A004"}]
+                        Executing (default): SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A004';
+                        Executing (default): SELECT `mid`, `title`, `categories`, `rate`, `year` FROM `movies` AS `movies` WHERE `movies`.`mid` = 'M001';
+                        Executing (default): SELECT `mid`, `aid` FROM `actors_movies` AS `actors_movies` WHERE `actors_movies`.`mid` = 'M001' AND `actors_movies`.`aid` IN ('A004');
+                        // then update relation table
+                        Executing (default): INSERT INTO `actors_movies` (`mid`,`aid`) VALUES ('M001','A004');
                     */
                     return true
                 }) // addActor
@@ -190,10 +178,8 @@ class ActorServiceCrud {
 
     removeActor = async (aid) => {
         return await Actor.findByPk(aid).then(async (actor) => { // first find actor
-            // Logging.winston.info(JSON.stringify(actor))
             /*
-            i have to remove relation first then remove entity
-            because it(relation table) has a foreign key
+                i have to remove relation first then remove entity because it(relation table) has a foreign key
             */
             return await sequelizeConnect.query('delete from actors_movies where aid = :aid', { // second remove relation in aid at all
                 replacements: {aid: actor.aid},
@@ -207,12 +193,11 @@ class ActorServiceCrud {
             })
         })
     }
-    /*
-    Executing (default): SELECT `aid`, `fullname`, `born`, `contact` FROM `actors` AS `actors` WHERE `actors`.`aid` = 'A004';
-    Executing (default): delete from actors_movies where aid = 'A004'
-    Executing (default): DELETE FROM `actors` WHERE `aid` = 'A004'
+    /**
+        Executing (default): SELECT `aid`, `fullname`, `born`, `contact` FROM `actors` AS `actors` WHERE `actors`.`aid` = 'A004';
+        Executing (default): delete from actors_movies where aid = 'A004'
+        Executing (default): DELETE FROM `actors` WHERE `aid` = 'A004'
     */
-
 
     editActor = async (aid, actor) => {
         return await this.retrieveActor(aid).then(async () => {
@@ -228,29 +213,10 @@ class ActorServiceCrud {
             })
         }) // retrieveActor
     }
-    /*
-    Executing (default): SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A001';
-    Executing (default): UPDATE `actors` SET `fullname`=?,`born`=?,`contact`=? WHERE `aid` = ?
+    /**
+        Executing (default): SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A001';
+        Executing (default): UPDATE `actors` SET `fullname`=?,`born`=?,`contact`=? WHERE `aid` = ?
     */
-
-
 }
 
-
-/* // testing logic
-// console.log(await new ActorServiceCrud().removeActor('A004'))
-await new ActorServiceCrud().retrieveActor('A004').then(async (actor) => {
-    await Movie.findByPk('M001').then(async (movie) => {
-        await movie.addActor(actor).then(()=>{
-            console.log(`>> added Actor id=${actor.aid} to Movie id=${movie.mid}`);
-        })
-    })
-})
-// first search
-Executing (default): SELECT `actors`.`aid`, `actors`.`fullname`, `actors`.`born`, `actors`.`contact`, `movies`.`mid` AS `movies.mid`, `movies`.`title` AS `movies.title`, `movies`.`categories` AS `movies.categories`, `movies`.`rate` AS `movies.rate`, `movies`.`year` AS `movies.year` FROM `actors` AS `actors` LEFT OUTER JOIN ( `actors_movies` AS `movies->actors_movies` INNER JOIN `movies` AS `movies` ON `movies`.`mid` = `movies->actors_movies`.`mid`) ON `actors`.`aid` = `movies->actors_movies`.`aid` WHERE `actors`.`aid` = 'A004';
-Executing (default): SELECT `mid`, `title`, `categories`, `rate`, `year` FROM `movies` AS `movies` WHERE `movies`.`mid` = 'M001';
-Executing (default): SELECT `mid`, `aid` FROM `actors_movies` AS `actors_movies` WHERE `actors_movies`.`mid` = 'M001' AND `actors_movies`.`aid` IN ('A004');
-// then update relation table
-Executing (default): INSERT INTO `actors_movies` (`mid`,`aid`) VALUES ('M001','A004');
-*/
-export default ActorServiceCrud
+export default ActorCrud

@@ -1,9 +1,9 @@
 import Logging from "../log/logging.js";
-import ActorServiceCrud from "../crud/actor.service.crud.js";
+import ActorCrud from "../crud/actor.crud.js";
 import express from "express"
 import bodyParser from "body-parser";
 
-const serviceCrud = new ActorServiceCrud()
+const actorCrudObj = new ActorCrud()
 const actorRouter = express.Router()
 
 // setting middle ware
@@ -12,7 +12,7 @@ actorRouter.use(bodyParser.urlencoded({extended: true}))
 
 // Anything wrong on response i set up to throw error
 actorRouter.get('/reads', async (req, res) => {
-    await serviceCrud.retrieveAllActors().then((response) => {
+    await actorCrudObj.retrieveAllActors().then((response) => {
         return res
             .status(202)
             .json({
@@ -26,8 +26,8 @@ actorRouter.get('/reads', async (req, res) => {
 })
 
 actorRouter.get('/read', async (req, res) => {
-    const aid = req.query.aid
-    await serviceCrud.retrieveActor(aid).then((response) => {
+    const aid = req.query.aid // ?aid=A003
+    await actorCrudObj.retrieveActor(aid).then((response) => {
         return res
             .status(202)
             .json({
@@ -48,7 +48,7 @@ actorRouter.post('/create', async (req, res) => {
         born: born,
         contact: contact
     }
-    await serviceCrud.addActor(actor).then((response) => {
+    await actorCrudObj.addActor(actor).then((response) => {
         return res
             .status(201)
             .json({
@@ -63,7 +63,7 @@ actorRouter.post('/create', async (req, res) => {
 
 actorRouter.post('/create/relation', async (req, res) => {
     const {aid, mid} = req.body
-    await serviceCrud.addRelation(aid, mid).then((response) => {
+    await actorCrudObj.addRelation(aid, mid).then((response) => {
         return res
             .status(201)
             .json({
@@ -78,7 +78,7 @@ actorRouter.post('/create/relation', async (req, res) => {
 
 actorRouter.delete('/delete', async (req, res) => {
     const aid = req.query.aid
-    await serviceCrud.removeActor(aid).then((response) => {
+    await actorCrudObj.removeActor(aid).then((response) => {
         return res
             .status(202)
             .json({
@@ -99,7 +99,7 @@ actorRouter.put('/update', async (req, res) => {
         born: born,
         contact: contact
     }
-    await serviceCrud.editActor(aid, actor).then((response) => {
+    await actorCrudObj.editActor(aid, actor).then((response) => {
         return res
             .status(202)
             .json({
@@ -111,6 +111,5 @@ actorRouter.put('/update', async (req, res) => {
         throw error
     })
 })
-
 
 export default actorRouter

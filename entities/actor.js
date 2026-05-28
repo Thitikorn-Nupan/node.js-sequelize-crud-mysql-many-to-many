@@ -1,26 +1,25 @@
-import {configClassAndSequelize} from "../config/config.db.js";
-const { DataTypes} = configClassAndSequelize.sequelize
-const ConfigDB = new configClassAndSequelize.configDb // init/create object ConfigDB class then store to variable
-const Actor = ConfigDB.sequelizeConnectDB.define(
-    'actors' , {
-        aid : {
-            type : DataTypes.STRING ,
-            primaryKey : true
-        } ,
-        fullname : {
-            type : DataTypes.STRING,
+import {configClassAndSequelize} from "../config/db.config.js";
+
+const {DataTypes} = configClassAndSequelize.sequelize
+const dbConfig = new configClassAndSequelize.dbConfig // init/create object ConfigDB class then store to variable
+const Actor = dbConfig.sequelizeConnectDB.define('actors', {
+        aid: {
+            type: DataTypes.STRING,
+            primaryKey: true
         },
-        born : {
-            type : DataTypes.STRING,
+        fullname: {
+            type: DataTypes.STRING,
         },
-        contact : {
-            type : DataTypes.STRING,
+        born: {
+            type: DataTypes.STRING,
+        },
+        contact: {
+            type: DataTypes.STRING,
         }
-    }
-    ,
+    },
     {
         // freeze name table not using *s on name
-        freezeTableName: true ,
+        freezeTableName: true,
         // don't add the timestamp attributes (updatedAt, createdAt)
         timestamps: false,
         // If don't want createdAt
@@ -29,5 +28,4 @@ const Actor = ConfigDB.sequelizeConnectDB.define(
         updatedAt: false
     }
 )
-
 export default Actor

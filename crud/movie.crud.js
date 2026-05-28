@@ -1,16 +1,15 @@
 import Actor from "../entities/actor.js";
 import Movie from "../entities/movie.js";
-import Logging from "../log/logging.js";
+// import Logging from "../log/logging.js";
 
-/*
+/**
     You have to know
     You set up at all about sequelize in the part of entities As, Actor.belongsToMany({}) , Movie.belongsToMany({})
-    it's done on that file actor.service.crud.js
+    it's done on that file actor.crud.js
     So you don't set it again
 */
-
-class MovieServiceCrud {
-    retrieveAllMovies = async () => { /* reads direct left join */
+class MovieCrud {
+    retrieveAllMovies = async () => { // reads direct left join
         return await Movie.findAll({
             include: [
                 {
@@ -25,7 +24,7 @@ class MovieServiceCrud {
             ]
         })
     }
-    /*
+    /**
     "mid": "M001",
             "title": "Fallout",
             "categories": "Action,Adventure,Drama",
@@ -54,7 +53,7 @@ class MovieServiceCrud {
         .
     */
 
-    retrieveMovie = async (mid) => { /* reads direct left join */
+    retrieveMovie = async (mid) => { // reads direct left join
         return await Movie.findByPk(mid,{
             include: [
                 {
@@ -70,4 +69,4 @@ class MovieServiceCrud {
     }
 }
 
-export default MovieServiceCrud
+export default MovieCrud

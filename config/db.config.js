@@ -1,9 +1,9 @@
-import {info} from "./info.db.js";
+import {info} from "./db.info.js";
 import sequelize from 'sequelize' // if you use it to connect mysql have to install mysql2 package manually
-import Logging from "../log/logging.js";
+// import Logging from "../log/logging.js";
 
-// Logging.winston.info(`${info.database} , ${info.username} , ${info.password}`)
-class ConfigDb {
+// Logging.winston.env(`${env.database} , ${env.username} , ${env.password}`)
+class DbConfig {
     get sequelizeConnectDB() {
         return new sequelize(
             info.database,
@@ -27,8 +27,8 @@ class ConfigDb {
 
 /*
 check to config. it was gonna good or bad
-new ConfigDb().sequelizeConnectDB.authenticate().then(() => {
-    Logging.winston.info('connected successfully!!')
+new DbConfig().sequelizeConnectDB.authenticate().then(() => {
+    Logging.winston.env('connected successfully!!')
 }).catch((error) => {
     Logging.winston.debug('failed connect!!')
     throw error
@@ -37,5 +37,5 @@ new ConfigDb().sequelizeConnectDB.authenticate().then(() => {
 
 export const configClassAndSequelize = {
     sequelize : sequelize ,
-    configDb : ConfigDb
+    dbConfig : DbConfig
 }
